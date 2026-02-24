@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órdenes de Pago Inmediato</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navegación -->
+        <nav class="nav-bar">
+            <a href="/" class="nav-link">📄 Razones de Notificación</a>
+            <a href="/ordenes-pago" class="nav-link active">💳 Órdenes de Pago</a>
+        </nav>
+
+        <div class="header">
+            <div class="logo">💳</div>
+            <h1>Órdenes de Pago Inmediato</h1>
+            <p>Sube tu Excel base y los PDFs de órdenes — genera el archivo cruzado</p>
+        </div>
+
+        <form id="form-ordenes">
+            <!-- Excel base upload -->
+            <div class="upload-section">
+                <label>📊 Excel base con datos de clientes</label>
+                <div class="upload-area" id="excel-base-area">
+                    <input type="file" id="excel-base-input" accept=".xlsx,.xls" />
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar el Excel base (.xlsx)</div>
+                    <div class="upload-filename" id="excel-base-name"></div>
+                </div>
+            </div>
+
+            <!-- PDFs folder upload -->
+            <div class="upload-section">
+                <label>📂 Carpeta con archivos PDF de órdenes de pago</label>
+                <div class="upload-area" id="pdfs-area">
+                    <input type="file" id="pdfs-input" accept=".pdf" multiple webkitdirectory />
+                    <div class="upload-icon">📂</div>
+                    <div class="upload-text">Arrastra una carpeta o haz clic para seleccionar los PDFs</div>
+                    <div class="upload-filename" id="pdfs-name"></div>
+                </div>
+                <div id="pdfs-list" class="file-list"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submit-ordenes-btn" disabled>
+                🚀 Procesar Órdenes
+            </button>
+        </form>
+
+        <div class="status" id="status-ordenes"></div>
+
+        <!-- Tabla de preview -->
+        <div id="preview-section" class="preview-section" style="display: none;">
+            <h3 class="preview-title">📋 Vista previa del resultado</h3>
+            <div class="table-wrapper">
+                <table id="preview-table" class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>NOMBRE_CLIENTE</th>
+                            <th>NUMERO_TITULO</th>
+                            <th>CUENTA_CONTRATO</th>
+                            <th>Attachment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-tbody"></tbody>
+                </table>
+            </div>
+            <div class="preview-info" id="preview-info"></div>
+        </div>
+
+        <div class="stats" id="stats-ordenes" style="display: none;">
+            <div class="stat-card">
+                <div class="number" id="stat-pdfs">0</div>
+                <div class="label">PDFs procesados</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="stat-matches">0</div>
+                <div class="label">Coincidencias</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="stat-ordenes-time">0s</div>
+                <div class="label">Tiempo</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            COBYPAT S.A. — Corporación Nacional de Telecomunicaciones CNT EP.
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/ordenes_pago.js"></script>
+</body>
+</html>

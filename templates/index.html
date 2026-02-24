@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Razones de Notificación</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navegación -->
+        <nav class="nav-bar">
+            <a href="/" class="nav-link active">📄 Razones de Notificación</a>
+            <a href="/ordenes-pago" class="nav-link">💳 Órdenes de Pago</a>
+        </nav>
+
+        <div class="header">
+            <div class="logo">📄</div>
+            <h1>Generador de Razones de Notificación</h1>
+            <p>Sube tu Excel y plantilla Word — descarga las razones generadas</p>
+        </div>
+
+        <form id="form">
+            <!-- Excel upload -->
+            <div class="upload-section">
+                <label>📊 Archivo Excel con datos de clientes</label>
+                <div class="upload-area" id="excel-area">
+                    <input type="file" id="excel-input" accept=".xlsx,.xls" />
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar el archivo .xlsx</div>
+                    <div class="upload-filename" id="excel-name"></div>
+                </div>
+            </div>
+
+            <!-- Plantilla upload -->
+            <div class="upload-section">
+                <label>📝 Plantilla Word (.docx)</label>
+                <div class="upload-area" id="plantilla-area">
+                    <input type="file" id="plantilla-input" accept=".docx" />
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar la plantilla .docx</div>
+                    <div class="upload-filename" id="plantilla-name"></div>
+                </div>
+            </div>
+
+            <!-- CSV fechas upload (opcional) -->
+            <div class="upload-section">
+                <label>📅 CSV de fechas de correo — CPanel (opcional)</label>
+                <div class="upload-area" id="csv-area">
+                    <input type="file" id="csv-input" accept=".csv" />
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar el CSV de fechas de correo</div>
+                    <div class="upload-filename" id="csv-name"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                🚀 Generar Razones
+            </button>
+        </form>
+
+        <div class="status" id="status"></div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="number" id="stat-docs">0</div>
+                <div class="label">Documentos</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="stat-time">0s</div>
+                <div class="label">Tiempo</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="stat-size">0 KB</div>
+                <div class="label">Tamaño ZIP</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            COBYPAT S.A. — Corporación Nacional de Telecomunicaciones CNT EP.
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

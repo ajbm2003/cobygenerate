@@ -1,0 +1,428 @@
+/* ============================================================
+   Generador de Razones de Notificación — Estilos principales
+   ============================================================ */
+
+/* === Reset === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* === Base === */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+/* === Container === */
+.container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* === Header === */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header .logo {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.header p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* === Upload section === */
+.upload-section {
+    margin-bottom: 20px;
+}
+
+.upload-section label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-area:hover {
+    border-color: #00b4d8;
+    background: rgba(0, 180, 216, 0.05);
+}
+
+.upload-area.dragover {
+    border-color: #00b4d8;
+    background: rgba(0, 180, 216, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-area.has-file {
+    border-color: #00c853;
+    background: rgba(0, 200, 83, 0.08);
+}
+
+.upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+}
+
+.upload-text {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.upload-filename {
+    font-size: 14px;
+    color: #00c853;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+/* === Buttons === */
+.btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0, 180, 216, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(0, 180, 216, 0.5);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* === Loading state === */
+.btn.loading {
+    pointer-events: none;
+    position: relative;
+    color: transparent;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    top: 50%;
+    left: 50%;
+    margin-left: -12px;
+    margin-top: -12px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* === Status messages === */
+.status {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+    text-align: center;
+}
+
+.status.success {
+    display: block;
+    background: rgba(0, 200, 83, 0.15);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    color: #69f0ae;
+}
+
+.status.error {
+    display: block;
+    background: rgba(255, 82, 82, 0.15);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    color: #ff8a80;
+}
+
+.status.info {
+    display: block;
+    background: rgba(0, 180, 216, 0.15);
+    border: 1px solid rgba(0, 180, 216, 0.3);
+    color: #80d8ff;
+}
+
+/* === Stats === */
+.stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.stat-card .number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #00b4d8;
+}
+
+.stat-card .label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === Footer === */
+.footer {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* === File chip === */
+.file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 200, 83, 0.15);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #69f0ae;
+    margin-top: 8px;
+}
+
+.file-chip .remove {
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.file-chip .remove:hover {
+    opacity: 1;
+}
+
+/* === Navigation bar === */
+.nav-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-link {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(0, 180, 216, 0.4);
+    backdrop-filter: blur(6px);
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 180, 216, 0.1), rgba(0, 119, 182, 0.05));
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.nav-link:hover {
+    color: #fff;
+    border-color: #00b4d8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 180, 216, 0.2);
+}
+
+.nav-link:hover::before {
+    opacity: 1;
+}
+
+.nav-link.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(0, 119, 182, 0.15));
+    border-color: #00b4d8;
+    box-shadow: 0 0 16px rgba(0, 180, 216, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(0);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: #00b4d8;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(0, 180, 216, 0.6);
+}
+
+.nav-link:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* === PDF chips list === */
+.pdf-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.pdf-chips .file-chip {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    width: 100%;
+}
+
+.file-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+
+/* === Preview table === */
+.preview-section {
+    margin-top: 20px;
+}
+
+.preview-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.preview-table th {
+    background: rgba(0, 180, 216, 0.15);
+    color: #80d8ff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.preview-table td {
+    padding: 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.preview-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.preview-table td.pending {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.preview-info {
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+}

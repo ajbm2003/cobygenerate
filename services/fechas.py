@@ -73,13 +73,17 @@ def expandir_mes(texto_fecha: str) -> str:
 
 def formatear_fechas_notificacion(fecha_notificacion: str) -> str:
     """
-    Divide FECHA_NOTIFICACION por ',' y devuelve texto 'fecha1 y fecha2'
-    con meses en nombre completo.
+    Divide FECHA_NOTIFICACION por ',' y devuelve texto con las 2 últimas
+    fechas formateadas con meses en nombre completo.
+    Solo toma las dos últimas fechas encontradas, sin importar cuántas haya.
     """
     if not fecha_notificacion or pd.isna(fecha_notificacion) or str(fecha_notificacion).strip() == "":
         return ""
 
     partes = [expandir_mes(f.strip()) for f in str(fecha_notificacion).split(",") if f.strip()]
+
+    # Tomar solo las 2 últimas fechas
+    partes = partes[-2:] if len(partes) > 2 else partes
 
     if len(partes) == 0:
         return ""

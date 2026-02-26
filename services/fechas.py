@@ -82,7 +82,17 @@ def formatear_fechas_notificacion(fecha_notificacion: str) -> str:
 
     partes = [expandir_mes(f.strip()) for f in str(fecha_notificacion).split(",") if f.strip()]
 
-    # Tomar solo las 2 últimas fechas
+    # Eliminar duplicados conservando el orden de aparición
+    vistos = set()
+    unicas = []
+    for p in partes:
+        clave = p.strip().lower()
+        if clave not in vistos:
+            vistos.add(clave)
+            unicas.append(p)
+    partes = unicas
+
+    # Tomar solo las 2 últimas fechas diferentes
     partes = partes[-2:] if len(partes) > 2 else partes
 
     if len(partes) == 0:

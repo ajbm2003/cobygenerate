@@ -66,7 +66,7 @@ def cruzar_con_excel(df_base: pd.DataFrame, registros: list[dict]) -> pd.DataFra
         "Email": "",
         "NOMBRE_CLIENTE": df_merged["Nombre cliente"],
         "NUMERO_TITULO": df_merged["Cédula/RUC"],
-        "CUENTA_CONTRATO": df_merged["CUENTA_CONTRATO"],
+        "CUENTA_CONTRATO": df_merged["CUENTA_CONTRATO"].str.replace("JC-PIC-", "", regex=False),
         "Attachment": df_merged["Attachment"],
     })
 

@@ -73,27 +73,57 @@ def expandir_mes(texto_fecha: str) -> str:
 
 def formatear_fechas_notificacion(fecha_notificacion: str) -> str:
     """
-    Divide FECHA_NOTIFICACION por ',' y devuelve texto con las 2 últimas
-    fechas formateadas con meses en nombre completo.
-    Solo toma las dos últimas fechas encontradas, sin importar cuántas haya.
+    Divide FECHA_NOTIFICACION por ',', agrupa por día, toma los 2 días
+    más recientes y de cada día escoge solo la última hora.
+    Devuelve texto con meses en nombre completo.
     """
     if not fecha_notificacion or pd.isna(fecha_notificacion) or str(fecha_notificacion).strip() == "":
         return ""
 
-    partes = [expandir_mes(f.strip()) for f in str(fecha_notificacion).split(",") if f.strip()]
+    raw_partes = [f.strip() for f in str(fecha_notificacion).split(",") if f.strip()]
 
-    # Eliminar duplicados conservando el orden de aparición
-    vistos = set()
-    unicas = []
-    for p in partes:
-        clave = p.strip().lower()
-        if clave not in vistos:
-            vistos.add(clave)
-            unicas.append(p)
-    partes = unicas
+    if not raw_partes:
+        return ""
 
-    # Tomar solo las 2 últimas fechas diferentes
-    partes = partes[-2:] if len(partes) > 2 else partes
+    # Parsear cada fecha a datetime para poder agrupar por día y ordenar por hora
+    fechas_dt = []
+    for raw in raw_partes:
+        texto = raw
+        for es, en in MESES_ES_EN.items():
+            texto = texto.replace(f" {es} ", f" {en} ").replace(f" {es.title()} ", f" {en} ")
+        try:
+            dt = pd.to_datetime(texto, format="%d %b %Y %H:%M:%S")
+            fechas_dt.append((dt, raw))
+        except Exception:
+            # Si no se puede parsear, mantener el texto original
+            fechas_dt.append((pd.NaT, raw))
+
+    # Filtrar las que se pudieron parsear
+    validas = [(dt, raw) for dt, raw in fechas_dt if pd.notna(dt)]
+    no_validas = [raw for dt, raw in fechas_dt if pd.isna(dt)]
+
+    if not validas:
+        # Si ninguna se pudo parsear, devolver las últimas 2 como texto
+        partes = [expandir_mes(p) for p in raw_partes[-2:]]
+        return " y ".join(partes) if len(partes) > 1 else partes[0]
+
+    # Agrupar por día y quedarse con la última hora de cada día
+    from collections import defaultdict
+    por_dia = defaultdict(list)
+    for dt, raw in validas:
+        por_dia[dt.date()].append((dt, raw))
+
+    # De cada día, tomar solo la entrada con la hora más tardía
+    mejores = []
+    for dia in sorted(por_dia.keys()):
+        mejor = max(por_dia[dia], key=lambda x: x[0])
+        mejores.append(mejor)
+
+    # Tomar solo los 2 días más recientes
+    mejores = mejores[-2:]
+
+    # Expandir meses a nombre completo
+    partes = [expandir_mes(raw) for _, raw in mejores]
 
     if len(partes) == 0:
         return ""

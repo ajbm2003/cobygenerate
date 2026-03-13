@@ -24,6 +24,11 @@ from pathlib import Path
 from services.fechas import procesar_csv_fechas
 from services.razones import generar_razones
 from services.ordenes_pago import extraer_registros_pdfs, cruzar_con_excel, generar_nombre_archivo
+from services.generar_documentos import generar_documentos_desde_excel
+from services.preprocesamiento import preprocesar_datos_opis, obtener_reemplazos_sexo
+from services.cruces import cruzar_archivos, filtrar_columnas_resultado
+import json
+from services.cruces import cruzar_archivos, filtrar_columnas_resultado
 
 # ============================================================
 # Configuración de la aplicación
@@ -87,6 +92,21 @@ async def pagina_ordenes_pago():
     return HTMLResponse((BASE_DIR / "templates" / "ordenes_pago.html").read_text(encoding="utf-8"))
 
 
+@app.get("/generar-archivos", response_class=HTMLResponse, summary="Interfaz — Generación de Archivos")
+async def pagina_generar_archivos():
+    return HTMLResponse((BASE_DIR / "templates" / "generar_archivos.html").read_text(encoding="utf-8"))
+
+
+@app.get("/cruces", response_class=HTMLResponse, summary="Interfaz — Cruces de datos")
+async def pagina_cruces():
+    return HTMLResponse((BASE_DIR / "templates" / "cruces.html").read_text(encoding="utf-8"))
+
+
+@app.get("/cruces", response_class=HTMLResponse, summary="Interfaz — Cruces de datos")
+async def pagina_cruces():
+    return HTMLResponse((BASE_DIR / "templates" / "cruces.html").read_text(encoding="utf-8"))
+
+
 # ============================================================
 # Endpoint: Generar razones de notificación
 # ============================================================
@@ -140,7 +160,6 @@ async def generar_razones_endpoint(
         if not archivos:
             raise HTTPException(status_code=400, detail="No se generaron documentos. Verifica los datos.")
 
-        # Crear ZIP en memoria
         zip_buffer = BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             for archivo in archivos:
@@ -217,3 +236,184 @@ async def procesar_ordenes_pago_endpoint(
 
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+# ============================================================
+# Endpoint: Generación de archivos desde plantilla
+# ============================================================
+
+@app.post(
+    "/generar-archivos",
+    summary="Generar documentos Word desde Excel y plantilla",
+    description=(
+        "Sube un Excel (.xlsx) con datos y una plantilla Word (.docx) con marcadores [COLUMNA]. "
+        "Genera un documento por cada fila del Excel reemplazando los marcadores. "
+        "Devuelve un ZIP con todos los documentos generados."
+    ),
+)
+async def generar_archivos_endpoint(
+    excel: UploadFile = File(..., description="Excel (.xlsx) con datos"),
+    plantilla: UploadFile = File(..., description="Plantilla Word (.docx) con marcadores [COLUMNA]"),
+):
+    _validar_extension(excel.filename, (".xlsx", ".xls"), "El archivo de datos debe ser .xlsx o .xls")
+    _validar_extension(plantilla.filename, (".docx",), "La plantilla debe ser un archivo .docx")
+
+    tmp_dir = tempfile.mkdtemp()
+    output_dir = os.path.join(tmp_dir, "documentos_generados")
+    os.makedirs(output_dir)
+
+    try:
+        excel_path = os.path.join(tmp_dir, "datos.xlsx")
+        plantilla_path = os.path.join(tmp_dir, "plantilla.docx")
+        await _guardar_upload(excel, excel_path)
+        await _guardar_upload(plantilla, plantilla_path)
+
+        df = _leer_excel(excel_path)
+        if df.empty:
+            raise HTTPException(status_code=400, detail="El Excel no contiene filas de datos.")
+
+        df.columns = [str(col).strip() for col in df.columns]
+
+        # Preprocesar: si tiene VALOR1/VALOR2, agregar columnas en letras
+        df = preprocesar_datos_opis(df)
+
+        obtener_reemplazos_previos = None
+        if "SEXO" in df.columns:
+            obtener_reemplazos_previos = lambda row: obtener_reemplazos_sexo(row.get("SEXO", ""))
+
+        archivos = generar_documentos_desde_excel(
+            df,
+            plantilla_path,
+            output_dir,
+            obtener_reemplazos_previos=obtener_reemplazos_previos,
+        )
+        if not archivos:
+            raise HTTPException(status_code=400, detail="No se generaron documentos.")
+
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for archivo in archivos:
+                zf.write(archivo, os.path.basename(archivo))
+        zip_buffer.seek(0)
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": "attachment; filename=documentos_generados.zip",
+                "X-Total-Docs": str(len(archivos)),
+            },
+        )
+
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+# ============================================================
+# Endpoint: Cruces de datos entre dos archivos
+# ============================================================
+
+@app.post(
+    "/procesar-cruces",
+    summary="Procesar cruce de datos",
+    description=(
+        "Sube dos archivos Excel (.xlsx) o CSV (.csv) y cruza por el campo JUICIO. "
+        "Devuelve las columnas disponibles y los registros que coinciden."
+    ),
+)
+async def procesar_cruces_endpoint(
+    archivo1: UploadFile = File(..., description="Primer archivo Excel o CSV"),
+    archivo2: UploadFile = File(..., description="Segundo archivo Excel o CSV"),
+):
+    _validar_extension(
+        archivo1.filename,
+        (".xlsx", ".xls", ".csv"),
+        "El primer archivo debe ser .xlsx, .xls o .csv"
+    )
+    _validar_extension(
+        archivo2.filename,
+        (".xlsx", ".xls", ".csv"),
+        "El segundo archivo debe ser .xlsx, .xls o .csv"
+    )
+
+    tmp_dir = tempfile.mkdtemp()
+
+    try:
+        # Guardar archivos
+        archivo1_path = os.path.join(tmp_dir, "archivo1.xlsx" if archivo1.filename.endswith((".xlsx", ".xls")) else "archivo1.csv")
+        archivo2_path = os.path.join(tmp_dir, "archivo2.xlsx" if archivo2.filename.endswith((".xlsx", ".xls")) else "archivo2.csv")
+        
+        await _guardar_upload(archivo1, archivo1_path)
+        await _guardar_upload(archivo2, archivo2_path)
+
+        # Leer archivos
+        if archivo1_path.endswith(".csv"):
+            df1 = pd.read_csv(archivo1_path)
+        else:
+            df1 = _leer_excel(archivo1_path)
+        
+        if archivo2_path.endswith(".csv"):
+            df2 = pd.read_csv(archivo2_path)
+        else:
+            df2 = _leer_excel(archivo2_path)
+
+        # Normalizar nombres de columnas
+        df1.columns = [str(col).strip() for col in df1.columns]
+        df2.columns = [str(col).strip() for col in df2.columns]
+
+        # Realizar cruce
+        resultado = cruzar_archivos(df1, df2)
+
+        # Guardar en sesión (en memoria)
+        coincidencias_json = resultado["coincidencias"].to_json(orient="records", force_ascii=False)
+
+        return {
+            "columnas": resultado["columnas"],
+            "total_coincidencias": resultado["total_coincidencias"],
+            "datos": json.loads(coincidencias_json),
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al procesar archivos: {str(e)}")
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+@app.post(
+    "/descargar-cruces",
+    summary="Descargar resultados de cruces",
+    description="Descarga los resultados del cruce como archivo Excel con las columnas seleccionadas.",
+)
+async def descargar_cruces_endpoint(payload: dict):
+    """Endpoint para descargar los datos en Excel."""
+    datos = payload.get("datos")
+    columnas_seleccionadas = payload.get("columnas_seleccionadas")
+    
+    if not datos or not columnas_seleccionadas:
+        raise HTTPException(status_code=400, detail="Datos o columnas vacías")
+
+    try:
+        # Crear DataFrame desde los datos
+        df = pd.DataFrame(datos)
+        
+        # Filtrar columnas
+        df_filtrado = filtrar_columnas_resultado(df, columnas_seleccionadas)
+
+        # Generar Excel en memoria
+        output_buffer = BytesIO()
+        with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
+            df_filtrado.to_excel(writer, index=False, sheet_name="Cruces")
+        output_buffer.seek(0)
+
+        return StreamingResponse(
+            output_buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": "attachment; filename=cruces_resultado.xlsx",
+            },
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al generar descarga: {str(e)}")

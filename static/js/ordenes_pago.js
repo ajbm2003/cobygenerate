@@ -50,20 +50,30 @@ function renderPdfList() {
     pdfsName.textContent = `✅ ${pdfFiles.length} archivo(s) PDF seleccionado(s)`;
     pdfsArea.classList.add('has-file');
 
-    // Mostrar los primeros 10 + resumen
+    // Mostrar los primeros 10 + resumen (construir con DocumentFragment)
     const maxShow = 10;
-    let html = '<div class="pdf-chips">';
+    const fragment = document.createDocumentFragment();
+    const container = document.createElement('div');
+    container.className = 'pdf-chips';
+
     const toShow = pdfFiles.slice(0, maxShow);
     for (const f of toShow) {
         const numero = extractNumero(f.name);
         const tag = numero ? `JC-PIC-${numero}` : '⚠️ sin número';
-        html += `<span class="file-chip">📄 ${f.name} → <strong>${tag}</strong></span>`;
+        const chip = document.createElement('span');
+        chip.className = 'file-chip';
+        chip.innerHTML = `📄 ${f.name} → <strong>${tag}</strong>`;
+        container.appendChild(chip);
     }
     if (pdfFiles.length > maxShow) {
-        html += `<span class="file-chip">… y ${pdfFiles.length - maxShow} archivo(s) más</span>`;
+        const extra = document.createElement('span');
+        extra.className = 'file-chip';
+        extra.textContent = `… y ${pdfFiles.length - maxShow} archivo(s) más`;
+        container.appendChild(extra);
     }
-    html += '</div>';
-    pdfsList.innerHTML = html;
+    fragment.appendChild(container);
+    pdfsList.innerHTML = '';
+    pdfsList.appendChild(fragment);
 }
 
 // === Configurar input de PDFs (carpeta / múltiple) ===

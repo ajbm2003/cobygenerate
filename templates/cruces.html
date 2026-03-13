@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cruces de Datos</title>
+    <link rel="preload" href="/static/css/styles.css" as="style">
+    <link rel="preload" href="/static/js/cruces.js" as="script" crossorigin>
+    <link rel="preload" href="/static/js/utils.js" as="script" crossorigin>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Asegurar que todos los textos sean visibles */
+        body, h1, h2, h4, h5, h6, p, span, div {
+            color: floralwhite!important;
+        }
+
+        input[type="text"], input[type="email"], textarea, select {
+            color: #333 !important;
+        }
+
+        .cruces-container {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .upload-section {
+            flex: 1;
+            color: #333;
+        }
+
+        .upload-section label {
+            color: #333;
+        }
+
+        .upload-text {
+            color: #666;
+        }
+
+        .upload-filename {
+            color: #28a745;
+        }
+
+        .columnas-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+            color: #333;
+        }
+
+        .columnas-section.visible {
+            display: block;
+        }
+
+        .columnas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .columna-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .columna-checkbox input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .columna-checkbox label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            color: #333;
+        }
+
+        .tabla-resultados {
+            margin-top: 2rem;
+            display: none;
+            overflow-x: auto;
+        }
+
+        .tabla-resultados.visible {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #ddd;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .columnas-section h3 {
+            color: #333;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .stats-info {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            color: #333;
+        }
+
+        .stats-info strong {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navegación -->
+        <nav class="nav-bar">
+            <a href="/" class="nav-link">📄 Razones de Notificación</a>
+            <a href="/ordenes-pago" class="nav-link">💳 Órdenes de Pago</a>
+            <a href="/generar-archivos" class="nav-link">📂 Generación de Archivos</a>
+            <a href="/cruces" class="nav-link active">🔀 Cruces de Datos</a>
+        </nav>
+
+        <div class="header">
+            <div class="logo">🔀</div>
+            <h1>Cruces de Datos</h1>
+            <p>Sube dos archivos y encuentra las coincidencias por JUICIO</p>
+        </div>
+
+        <!-- Fase 1: Upload -->
+        <div id="fase-upload">
+            <form id="form-cruces">
+                <div class="cruces-container">
+                    <!-- Archivo 1 -->
+                    <div class="upload-section">
+                        <label>📁 Primer archivo (Excel o CSV)</label>
+                        <div class="upload-area" id="archivo1-area">
+                            <input type="file" id="archivo1-input" accept=".xlsx,.xls,.csv" />
+                            <div class="upload-icon">📊</div>
+                            <div class="upload-text">Arrastra o haz clic para seleccionar el archivo</div>
+                            <div class="upload-filename" id="archivo1-name"></div>
+                        </div>
+                    </div>
+
+                    <!-- Archivo 2 -->
+                    <div class="upload-section">
+                        <label>📁 Segundo archivo (Excel o CSV)</label>
+                        <div class="upload-area" id="archivo2-area">
+                            <input type="file" id="archivo2-input" accept=".xlsx,.xls,.csv" />
+                            <div class="upload-icon">📊</div>
+                            <div class="upload-text">Arrastra o haz clic para seleccionar el archivo</div>
+                            <div class="upload-filename" id="archivo2-name"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submit-btn" disabled style="margin-top: 2rem; width: 100%;">
+                    🔀 Procesar Cruces
+                </button>
+            </form>
+
+            <div class="status" id="status"></div>
+        </div>
+
+        <!-- Fase 2: Selección de columnas y resultados -->
+        <div id="fase-resultados" style="display: none;">
+            <div class="stats-info">
+                <strong id="total-coincidencias">Cargando...</strong>
+            </div>
+
+            <div class="columnas-section" id="columnas-section">
+                <h3>Selecciona las columnas que deseas ver</h3>
+                <div class="columnas-grid" id="columnas-grid"></div>
+                <button type="button" class="btn btn-primary" id="btn-aplicar-filtro" style="margin-top: 1rem; width: 100%;">
+                    ✓ Aplicar Filtro
+                </button>
+            </div>
+
+            <div class="tabla-resultados" id="tabla-resultados">
+                <table id="tabla-datos">
+                    <thead id="tabla-head"></thead>
+                    <tbody id="tabla-body"></tbody>
+                </table>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" id="btn-volver">⬅ Volver</button>
+                <button type="button" class="btn btn-primary" id="btn-descargar" style="display: none;">
+                    ⬇ Descargar Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            COBYPAT S.A. — Corporación Nacional de Telecomunicaciones CNT EP.
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/cruces.js"></script>
+</body>
+</html>

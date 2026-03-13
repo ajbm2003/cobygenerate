@@ -24,13 +24,15 @@ body {
 /* === Container === */
 .container {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     padding: 40px;
     max-width: 600px;
     width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    contain: layout style;
 }
 
 /* === Header === */
@@ -75,9 +77,11 @@ body {
     padding: 25px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
     position: relative;
     overflow: hidden;
+    will-change: border-color;
+    contain: content;
 }
 
 .upload-area:hover {
@@ -88,7 +92,6 @@ body {
 .upload-area.dragover {
     border-color: #00b4d8;
     background: rgba(0, 180, 216, 0.1);
-    transform: scale(1.02);
 }
 
 .upload-area.has-file {
@@ -129,10 +132,11 @@ body {
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     margin-top: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    will-change: transform;
 }
 
 .btn-primary {
@@ -143,7 +147,7 @@ body {
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 30px rgba(0, 180, 216, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
 }
 
 .btn-primary:disabled {
@@ -295,13 +299,13 @@ body {
     font-weight: 600;
     color: #fff;
     text-decoration: none;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     background: rgba(255, 255, 255, 0.04);
     border: 1.5px solid rgba(0, 180, 216, 0.4);
-    backdrop-filter: blur(6px);
     letter-spacing: 0.3px;
     position: relative;
     overflow: hidden;
+    will-change: transform;
 }
 
 .nav-link::before {
@@ -310,14 +314,14 @@ body {
     inset: 0;
     background: linear-gradient(135deg, rgba(0, 180, 216, 0.1), rgba(0, 119, 182, 0.05));
     opacity: 0;
-    transition: opacity 0.35s ease;
+    transition: opacity 0.2s ease;
 }
 
 .nav-link:hover {
     color: #fff;
     border-color: #00b4d8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 180, 216, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 12px rgba(0, 180, 216, 0.2);
 }
 
 .nav-link:hover::before {

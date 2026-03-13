@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generación de Archivos</title>
+    <link rel="preload" href="/static/css/styles.css" as="style">
+    <link rel="preload" href="/static/js/generar_archivos.js" as="script" crossorigin>
+    <link rel="preload" href="/static/js/utils.js" as="script" crossorigin>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navegación -->
+        <nav class="nav-bar">
+            <a href="/" class="nav-link">📄 Razones de Notificación</a>
+            <a href="/ordenes-pago" class="nav-link">💳 Órdenes de Pago</a>
+            <a href="/generar-archivos" class="nav-link active">📂 Generación de Archivos</a>
+            <a href="/cruces" class="nav-link">🔀 Cruces de Datos</a>
+        </nav>
+
+        <div class="header">
+            <div class="logo">📂</div>
+            <h1>Generación de Archivos</h1>
+            <p>Sube un Excel con datos y una plantilla Word con marcadores <strong>[COLUMNA]</strong> — genera un documento por cada fila</p>
+        </div>
+
+        <form id="form-generar">
+            <!-- Excel upload -->
+            <div class="upload-section">
+                <label>📊 Archivo Excel con valores (.xlsx)</label>
+                <div class="upload-area" id="excel-gen-area">
+                    <input type="file" id="excel-gen-input" accept=".xlsx,.xls" />
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar el archivo .xlsx</div>
+                    <div class="upload-filename" id="excel-gen-name"></div>
+                </div>
+            </div>
+
+            <!-- Plantilla Word upload -->
+            <div class="upload-section">
+                <label>📝 Plantilla Word (.docx) con marcadores [COLUMNA]</label>
+                <div class="upload-area" id="plantilla-gen-area">
+                    <input type="file" id="plantilla-gen-input" accept=".docx" />
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar la plantilla .docx</div>
+                    <div class="upload-filename" id="plantilla-gen-name"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submit-gen-btn" disabled>
+                🚀 Generar Archivos
+            </button>
+        </form>
+
+        <div class="status" id="status-gen"></div>
+
+        <div class="stats" id="stats-gen" style="display: none;">
+            <div class="stat-card">
+                <div class="number" id="stat-gen-docs">0</div>
+                <div class="label">Documentos</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="stat-gen-time">0s</div>
+                <div class="label">Tiempo</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="stat-gen-size">0 KB</div>
+                <div class="label">Tamaño ZIP</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            COBYPAT S.A. — Corporación Nacional de Telecomunicaciones CNT EP.
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/generar_archivos.js"></script>
+</body>
+</html>

@@ -60,7 +60,6 @@ def generar_razones(
             "FECHAS": fechas_texto,
         })
 
-        # Guardar documento
         nombre = f"Razon_{datos['CUENTA_CONTRATO']}_{numero_titulo}.docx"
         filepath = os.path.join(output_dir, nombre)
         doc.save(filepath)

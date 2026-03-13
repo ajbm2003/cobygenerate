@@ -1,24 +1,21 @@
 /**
- * app.js — Lógica principal de la aplicación
- * =============================================
+ * generar_archivos.js — Lógica del módulo Generación de Archivos
+ * ================================================================
  */
 
 import { showStatus, setupFileInput, downloadBlob, setButtonLoading } from './utils.js';
 
 // === Elementos del DOM ===
-const form          = document.getElementById('form');
-const excelInput    = document.getElementById('excel-input');
-const plantillaInput = document.getElementById('plantilla-input');
-const csvInput      = document.getElementById('csv-input');
-const excelArea     = document.getElementById('excel-area');
-const plantillaArea = document.getElementById('plantilla-area');
-const csvArea       = document.getElementById('csv-area');
-const excelName     = document.getElementById('excel-name');
-const plantillaName = document.getElementById('plantilla-name');
-const csvName       = document.getElementById('csv-name');
-const submitBtn     = document.getElementById('submit-btn');
-const statusDiv     = document.getElementById('status');
-const statsDiv      = document.getElementById('stats');
+const form          = document.getElementById('form-generar');
+const excelInput    = document.getElementById('excel-gen-input');
+const plantillaInput = document.getElementById('plantilla-gen-input');
+const excelArea     = document.getElementById('excel-gen-area');
+const plantillaArea = document.getElementById('plantilla-gen-area');
+const excelName     = document.getElementById('excel-gen-name');
+const plantillaName = document.getElementById('plantilla-gen-name');
+const submitBtn     = document.getElementById('submit-gen-btn');
+const statusDiv     = document.getElementById('status-gen');
+const statsDiv      = document.getElementById('stats-gen');
 
 // === Verificar que los archivos requeridos estén seleccionados ===
 function checkReady() {
@@ -28,7 +25,6 @@ function checkReady() {
 // === Configurar inputs de archivo ===
 setupFileInput(excelInput, excelArea, excelName, checkReady);
 setupFileInput(plantillaInput, plantillaArea, plantillaName, checkReady);
-setupFileInput(csvInput, csvArea, csvName, null);
 
 // === Envío del formulario ===
 form.addEventListener('submit', async (e) => {
@@ -37,9 +33,6 @@ form.addEventListener('submit', async (e) => {
     const formData = new FormData();
     formData.append('excel', excelInput.files[0]);
     formData.append('plantilla', plantillaInput.files[0]);
-    if (csvInput.files.length > 0) {
-        formData.append('csv_fechas', csvInput.files[0]);
-    }
 
     setButtonLoading(submitBtn, true);
     showStatus(statusDiv, '⏳ Generando documentos... Esto puede tardar unos segundos.', 'info');
@@ -48,7 +41,7 @@ form.addEventListener('submit', async (e) => {
     const startTime = Date.now();
 
     try {
-        const response = await fetch('/generar-razones', {
+        const response = await fetch('/generar-archivos', {
             method: 'POST',
             body: formData,
         });
@@ -69,14 +62,15 @@ form.addEventListener('submit', async (e) => {
 
         const blob = await response.blob();
         const sizeKB = (blob.size / 1024).toFixed(0);
+        const totalDocs = response.headers.get('X-Total-Docs') || '?';
 
-        downloadBlob(blob, 'razones_notificacion.zip');
+        downloadBlob(blob, 'documentos_generados.zip');
 
         showStatus(statusDiv, '✅ ¡Documentos generados exitosamente! Descarga iniciada.', 'success');
 
-        document.getElementById('stat-time').textContent = elapsed + 's';
-        document.getElementById('stat-size').textContent = sizeKB + ' KB';
-        document.getElementById('stat-docs').textContent = '✓';
+        document.getElementById('stat-gen-docs').textContent = totalDocs;
+        document.getElementById('stat-gen-time').textContent = elapsed + 's';
+        document.getElementById('stat-gen-size').textContent = sizeKB + ' KB';
         statsDiv.style.display = 'flex';
 
     } catch (err) {

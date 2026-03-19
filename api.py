@@ -12,6 +12,7 @@ import os
 import shutil
 import tempfile
 import zipfile
+from datetime import datetime
 from io import BytesIO
 from typing import List, Optional
 
@@ -21,11 +22,34 @@ from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
+MESES_ES = {
+    1: "enero",
+    2: "febrero",
+    3: "marzo",
+    4: "abril",
+    5: "mayo",
+    6: "junio",
+    7: "julio",
+    8: "agosto",
+    9: "septiembre",
+    10: "octubre",
+    11: "noviembre",
+    12: "diciembre",
+}
+
+def formatear_fecha_larga_es(fecha: datetime) -> str:
+    """Devuelve fecha en formato: '19 de marzo del 2026'."""
+    return f"{fecha.day} de {MESES_ES[fecha.month]} del {fecha.year}"
+
 from services.fechas import procesar_csv_fechas
 from services.razones import generar_razones
 from services.ordenes_pago import extraer_registros_pdfs, cruzar_con_excel, generar_nombre_archivo
 from services.generar_documentos import generar_documentos_desde_excel
-from services.preprocesamiento import preprocesar_datos_opis, obtener_reemplazos_sexo
+from services.preprocesamiento import (
+    preprocesar_datos_opis,
+    obtener_reemplazos_sexo,
+    obtener_reemplazos_auto_de_pago,
+)
 from services.cruces import cruzar_archivos, filtrar_columnas_resultado
 import json
 from services.cruces import cruzar_archivos, filtrar_columnas_resultado
@@ -278,8 +302,20 @@ async def generar_archivos_endpoint(
         df = preprocesar_datos_opis(df)
 
         obtener_reemplazos_previos = None
-        if "SEXO" in df.columns:
-            obtener_reemplazos_previos = lambda row: obtener_reemplazos_sexo(row.get("SEXO", ""))
+        nombre_excel = (excel.filename or "").lower()
+        es_ampliaciones = "ampliaciones" in nombre_excel
+        if es_ampliaciones:
+            df["HOY"] = formatear_fecha_larga_es(datetime.now())
+        if es_ampliaciones:
+            def _reemplazos_ampliaciones(row):
+                reemplazos = []
+                if "SEXO" in df.columns:
+                    reemplazos.extend(obtener_reemplazos_sexo(row.get("SEXO", "")))
+                if "AUTO DE PAGO" in df.columns:
+                    reemplazos.extend(obtener_reemplazos_auto_de_pago(row.get("AUTO DE PAGO", "")))
+                return reemplazos
+
+            obtener_reemplazos_previos = _reemplazos_ampliaciones
 
         archivos = generar_documentos_desde_excel(
             df,

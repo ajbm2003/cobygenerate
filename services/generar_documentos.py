@@ -98,6 +98,39 @@ def preprocesar_datos_opis(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _formatear_valor1(valor) -> str:
+    """Formatea VALOR1 a número con 2 decimales. Si falta o es inválido, usa 40.00."""
+    if valor is None or pd.isna(valor):
+        return "40.00"
+
+    texto = str(valor).strip()
+    if texto == "":
+        return "40.00"
+
+    # Soporta: 40, 40.5, 40,5, 1,234.56, 1234,56
+    normalizado = texto.replace(" ", "")
+    if "," in normalizado and "." in normalizado:
+        normalizado = normalizado.replace(",", "")
+    elif "," in normalizado:
+        normalizado = normalizado.replace(",", ".")
+
+    try:
+        numero = float(normalizado)
+    except (TypeError, ValueError):
+        return "40.00"
+
+    return f"{numero:.2f}"
+
+
+def _valor_para_placeholder(key: str, value) -> str:
+    """Obtiene el texto final a insertar para cada marcador."""
+    if str(key).strip().upper() == "VALOR1":
+        return _formatear_valor1(value)
+    if value is None or pd.isna(value):
+        return ""
+    return str(value)
+
+
 def _replace_placeholder_in_paragraph(paragraph, key: str, value: str) -> None:
     """Reemplaza [key] en un párrafo, manejando marcadores divididos entre runs."""
     placeholder = f"[{key}]"
@@ -248,9 +281,7 @@ def generar_documentos_desde_excel(
 
     for i, row in df.iterrows():
         doc = Document(plantilla_path)
-        if obtener_reemplazos_previos:
-            _apply_literal_replacements(doc, obtener_reemplazos_previos(row))
-        variables = {k: str(v) for k, v in row.to_dict().items()}
+        variables = {k: _valor_para_placeholder(k, v) for k, v in row.to_dict().items()}
 
         for p in doc.paragraphs:
             _process_paragraph(p, variables)
@@ -263,6 +294,11 @@ def generar_documentos_desde_excel(
                 _process_paragraph(p, variables)
             for p in section.footer.paragraphs:
                 _process_paragraph(p, variables)
+
+        # Aplicar reemplazos literales al final para no modificar
+        # placeholders del tipo [proceso ] antes de resolverlos.
+        if obtener_reemplazos_previos:
+            _apply_literal_replacements(doc, obtener_reemplazos_previos(row))
 
         output_file = os.path.join(output_dir, f"documento_{i + 1}.docx")
         doc.save(output_file)

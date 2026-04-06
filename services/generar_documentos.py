@@ -4,6 +4,7 @@ con los valores de cada fila de un DataFrame.
 """
 
 import os
+import re
 from typing import List
 
 import pandas as pd
@@ -270,6 +271,7 @@ def generar_documentos_desde_excel(
     plantilla_path: str,
     output_dir: str,
     obtener_reemplazos_previos=None,
+    obtener_nombre_archivo=None,
 ) -> List[str]:
     """
     Genera un documento Word por cada fila del DataFrame, reemplazando
@@ -300,7 +302,19 @@ def generar_documentos_desde_excel(
         if obtener_reemplazos_previos:
             _apply_literal_replacements(doc, obtener_reemplazos_previos(row))
 
-        output_file = os.path.join(output_dir, f"documento_{i + 1}.docx")
+        nombre_base = None
+        if obtener_nombre_archivo:
+            nombre_base = str(obtener_nombre_archivo(row, i) or "").strip()
+
+        if not nombre_base:
+            nombre_base = f"documento_{i + 1}"
+
+        # Evitar caracteres inválidos en nombres de archivo
+        nombre_base = re.sub(r'[\\/:*?"<>|]+', "_", nombre_base).strip(" .")
+        if not nombre_base:
+            nombre_base = f"documento_{i + 1}"
+
+        output_file = os.path.join(output_dir, f"{nombre_base}.docx")
         doc.save(output_file)
         archivos.append(output_file)
 

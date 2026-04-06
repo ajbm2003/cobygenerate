@@ -52,7 +52,6 @@ from services.preprocesamiento import (
 )
 from services.cruces import cruzar_archivos, filtrar_columnas_resultado
 import json
-from services.cruces import cruzar_archivos, filtrar_columnas_resultado
 
 # ============================================================
 # Configuración de la aplicación
@@ -303,9 +302,19 @@ async def generar_archivos_endpoint(
 
         obtener_reemplazos_previos = None
         nombre_excel = (excel.filename or "").lower()
-        es_ampliaciones = "ampliaciones" in nombre_excel
+        es_ampliaciones = ("ampliaciones" in nombre_excel) or ("amplicaciones" in nombre_excel)
         if es_ampliaciones:
             df["HOY"] = formatear_fecha_larga_es(datetime.now())
+
+        obtener_nombre_archivo = None
+        if es_ampliaciones and "NOMBRES" in df.columns:
+            def _nombre_archivo_ampliaciones(row, i):
+                nombre_cliente = str(row.get("NOMBRES", "")).strip()
+                if not nombre_cliente:
+                    return f"documento-{i + 1}"
+                return f"documento-{nombre_cliente}"
+
+            obtener_nombre_archivo = _nombre_archivo_ampliaciones
         if es_ampliaciones:
             def _reemplazos_ampliaciones(row):
                 reemplazos = []
@@ -322,6 +331,7 @@ async def generar_archivos_endpoint(
             plantilla_path,
             output_dir,
             obtener_reemplazos_previos=obtener_reemplazos_previos,
+            obtener_nombre_archivo=obtener_nombre_archivo,
         )
         if not archivos:
             raise HTTPException(status_code=400, detail="No se generaron documentos.")

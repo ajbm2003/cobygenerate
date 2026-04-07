@@ -9,6 +9,8 @@ from typing import List
 
 import pandas as pd
 from docx import Document
+from .docx_utils import iterar_parrafos_docx
+from .formatos import formatear_valor1
 
 
 # ============================================================
@@ -99,36 +101,43 @@ def preprocesar_datos_opis(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _formatear_valor1(valor) -> str:
-    """Formatea VALOR1 a número con 2 decimales. Si falta o es inválido, usa 40.00."""
-    if valor is None or pd.isna(valor):
-        return "40.00"
-
+def _formatear_hora_sin_segundos(valor) -> str | None:
+    """Si el valor representa una hora, la retorna como HH:MM; si no, retorna None."""
     texto = str(valor).strip()
-    if texto == "":
-        return "40.00"
+    if not texto:
+        return None
 
-    # Soporta: 40, 40.5, 40,5, 1,234.56, 1234,56
-    normalizado = texto.replace(" ", "")
-    if "," in normalizado and "." in normalizado:
-        normalizado = normalizado.replace(",", "")
-    elif "," in normalizado:
-        normalizado = normalizado.replace(",", ".")
+    # Casos tipo: 12:30:00, 12:30, 9:05:59.123
+    match_hora = re.fullmatch(r"(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?", texto)
+    if match_hora:
+        hora = int(match_hora.group(1))
+        minuto = int(match_hora.group(2))
+        if 0 <= hora <= 23 and 0 <= minuto <= 59:
+            return f"{hora:02d}:{minuto:02d}"
 
-    try:
-        numero = float(normalizado)
-    except (TypeError, ValueError):
-        return "40.00"
+    # Caso fecha+hora típico: 2026-04-07 12:30:00
+    match_fecha_hora = re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}\s+(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?",
+        texto,
+    )
+    if match_fecha_hora:
+        hora = int(match_fecha_hora.group(1))
+        minuto = int(match_fecha_hora.group(2))
+        if 0 <= hora <= 23 and 0 <= minuto <= 59:
+            return f"{hora:02d}:{minuto:02d}"
 
-    return f"{numero:.2f}"
+    return None
 
 
 def _valor_para_placeholder(key: str, value) -> str:
     """Obtiene el texto final a insertar para cada marcador."""
     if str(key).strip().upper() == "VALOR1":
-        return _formatear_valor1(value)
+        return formatear_valor1(value)
     if value is None or pd.isna(value):
         return ""
+    hora_sin_segundos = _formatear_hora_sin_segundos(value)
+    if hora_sin_segundos is not None:
+        return hora_sin_segundos
     return str(value)
 
 
@@ -181,15 +190,6 @@ def _process_paragraph(paragraph, variables: dict) -> None:
     """Reemplaza todos los marcadores en un párrafo."""
     for key, value in variables.items():
         _replace_placeholder_in_paragraph(paragraph, key, value)
-
-
-def _process_tables(tables, variables: dict) -> None:
-    """Reemplaza marcadores en todas las tablas del documento."""
-    for table in tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for p in cell.paragraphs:
-                    _process_paragraph(p, variables)
 
 
 def _replace_literal_in_paragraph(paragraph, old_text: str, new_text: str) -> None:
@@ -250,20 +250,8 @@ def _apply_literal_replacements(doc, replacements: list[tuple[str, str]]) -> Non
         return
 
     for old_text, new_text in replacements:
-        for paragraph in doc.paragraphs:
+        for paragraph in iterar_parrafos_docx(doc):
             _replace_literal_in_paragraph(paragraph, old_text, new_text)
-
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:
-                        _replace_literal_in_paragraph(paragraph, old_text, new_text)
-
-        for section in doc.sections:
-            for paragraph in section.header.paragraphs:
-                _replace_literal_in_paragraph(paragraph, old_text, new_text)
-            for paragraph in section.footer.paragraphs:
-                _replace_literal_in_paragraph(paragraph, old_text, new_text)
 
 
 def generar_documentos_desde_excel(
@@ -285,17 +273,8 @@ def generar_documentos_desde_excel(
         doc = Document(plantilla_path)
         variables = {k: _valor_para_placeholder(k, v) for k, v in row.to_dict().items()}
 
-        for p in doc.paragraphs:
+        for p in iterar_parrafos_docx(doc):
             _process_paragraph(p, variables)
-
-        _process_tables(doc.tables, variables)
-
-        # Procesar headers y footers
-        for section in doc.sections:
-            for p in section.header.paragraphs:
-                _process_paragraph(p, variables)
-            for p in section.footer.paragraphs:
-                _process_paragraph(p, variables)
 
         # Aplicar reemplazos literales al final para no modificar
         # placeholders del tipo [proceso ] antes de resolverlos.

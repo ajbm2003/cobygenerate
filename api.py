@@ -127,11 +127,6 @@ async def pagina_cruces():
     return HTMLResponse((BASE_DIR / "templates" / "cruces.html").read_text(encoding="utf-8"))
 
 
-@app.get("/cruces", response_class=HTMLResponse, summary="Interfaz — Cruces de datos")
-async def pagina_cruces():
-    return HTMLResponse((BASE_DIR / "templates" / "cruces.html").read_text(encoding="utf-8"))
-
-
 # ============================================================
 # Endpoint: Generar razones de notificación
 # ============================================================

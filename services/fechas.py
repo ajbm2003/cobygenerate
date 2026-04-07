@@ -24,7 +24,12 @@ REMITENTE_DEFAULT = "cobranzaypatrocinio@cobypat.com"
 
 def procesar_csv_fechas(csv_path: str, remitente: str = REMITENTE_DEFAULT) -> dict:
     """
-    Lee el CSV de CPanel, filtra por remitente y las 2 fechas más recientes.
+    Lee el CSV de CPanel y filtra por remitente.
+
+    Nota:
+        Se conservan todas las fechas por destinatario. La selección de las 2
+        más recientes se realiza después, por cada registro, en
+        formatear_fechas_notificacion.
 
     Returns:
         dict: email_destinatario → [lista de fechas]
@@ -39,11 +44,6 @@ def procesar_csv_fechas(csv_path: str, remitente: str = REMITENTE_DEFAULT) -> di
 
     # Filtrar por remitente
     df_filtrado = df_csv[df_csv["Remitente"] == remitente].copy()
-
-    # Tomar las 2 fechas (días) más recientes
-    if not df_filtrado.empty:
-        fechas_unicas = sorted(df_filtrado["_fecha_dt"].dt.date.unique(), reverse=True)[:2]
-        df_filtrado = df_filtrado[df_filtrado["_fecha_dt"].dt.date.isin(fechas_unicas)]
 
     # Diccionario: Destinatario → [fechas]
     return (

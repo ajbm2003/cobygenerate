@@ -80,7 +80,9 @@ def _validar_extension(filename: str, extensiones: tuple, mensaje: str):
 def _leer_excel(path: str) -> pd.DataFrame:
     """Lee un archivo Excel y retorna un DataFrame."""
     try:
-        return pd.read_excel(path)
+        # Leer como texto evita que pandas convierta identificadores a números
+        # (por ejemplo, 018373432 -> 18373432).
+        return pd.read_excel(path, dtype=str, keep_default_na=False)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al leer el Excel: {e}")
 

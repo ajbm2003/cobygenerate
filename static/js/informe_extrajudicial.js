@@ -110,16 +110,80 @@ btnImprimir.addEventListener('click', () => window.print());
 
 // ── Renderizado principal ─────────────────────────────────────
 function renderizarInforme(data) {
-    renderizarGestiones(data.gestiones, data.periodo);
-    renderizarLiquidaciones(data.liquidaciones, data.periodo);
+    const periodo = data.periodo || '';
+
+    // Encabezado de impresión
+    document.getElementById('print-periodo-texto').textContent = `Período: ${periodo}`;
+
+    if (data.gestiones.resumen) {
+        renderizarResumen(data.gestiones.resumen, periodo);
+        document.getElementById('bloque-resumen').style.display = '';
+    } else {
+        document.getElementById('bloque-resumen').style.display = 'none';
+    }
+    renderizarGestiones(data.gestiones, periodo);
+    renderizarLiquidaciones(data.liquidaciones, periodo);
 
     const bloqueCorreos = document.getElementById('bloque-correos');
     if (data.correos) {
-        renderizarCorreos(data.correos, data.periodo);
+        renderizarCorreos(data.correos, periodo);
         bloqueCorreos.style.display = '';
     } else {
         bloqueCorreos.style.display = 'none';
     }
+}
+
+// ── Bloque 0: Resumen por agente y módulo ────────────────────
+function renderizarResumen(r, _periodo) {
+    document.getElementById('titulo-resumen').textContent = r.titulo;
+
+    // Tabla agente
+    const bodyAgente = document.getElementById('body-agente');
+    bodyAgente.innerHTML = '';
+    r.tabla_agente.forEach(row => {
+        bodyAgente.insertAdjacentHTML('beforeend', `
+            <tr>
+                <td>${row.agente}</td>
+                <td style="text-align:right">${row.gestiones}</td>
+                <td style="text-align:right">${row.porcentaje.toFixed(2)}%</td>
+            </tr>`);
+    });
+    bodyAgente.insertAdjacentHTML('beforeend', `
+        <tr class="fila-total">
+            <td>Total general</td>
+            <td style="text-align:right">${r.total}</td>
+            <td style="text-align:right">100,00%</td>
+        </tr>`);
+
+    // Pivot módulo × sub-respuesta
+    const bodyPivot = document.getElementById('body-pivot');
+    bodyPivot.innerHTML = '';
+    r.grupos.forEach(grupo => {
+        // Fila de módulo
+        bodyPivot.insertAdjacentHTML('beforeend', `
+            <tr class="fila-modulo">
+                <td colspan="2">${grupo.modulo}</td>
+            </tr>`);
+        // Sub-filas
+        grupo.filas.forEach(fila => {
+            bodyPivot.insertAdjacentHTML('beforeend', `
+                <tr class="fila-sub">
+                    <td>${fila.sub}</td>
+                    <td style="text-align:right">${fila.count}</td>
+                </tr>`);
+        });
+        // Subtotal del módulo
+        bodyPivot.insertAdjacentHTML('beforeend', `
+            <tr class="fila-subtotal">
+                <td>Subtotal ${grupo.modulo}</td>
+                <td style="text-align:right">${grupo.subtotal}</td>
+            </tr>`);
+    });
+    bodyPivot.insertAdjacentHTML('beforeend', `
+        <tr class="fila-total">
+            <td>Total general</td>
+            <td style="text-align:right">${r.total}</td>
+        </tr>`);
 }
 
 // ── Bloque 1: Gestiones ───────────────────────────────────────
@@ -188,6 +252,16 @@ function renderizarLiquidaciones(l, periodo) {
 
     const tbody = document.getElementById('body-liquidaciones');
     tbody.innerHTML = '';
+
+    if (l.sin_datos || !l.tabla.length) {
+        tbody.insertAdjacentHTML('beforeend', `
+            <tr><td colspan="3" style="text-align:center;color:#888;padding:1.5rem">
+                Sin registros de liquidaciones para el período ${periodo}
+            </td></tr>`);
+        if (chartCombo) { chartCombo.destroy(); chartCombo = null; }
+        return;
+    }
+
     l.tabla.forEach(row => {
         tbody.insertAdjacentHTML('beforeend', `
             <tr>

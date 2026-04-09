@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe Extrajudicial</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .container {
+            max-width: 960px;
+        }
+
+        /* ── Upload ── */
+        .upload-row {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .upload-row .upload-section {
+            flex: 1;
+        }
+        .upload-section label {
+            color: rgba(255,255,255,0.9) !important;
+        }
+
+        /* ── Logo ── */
+        .logo-cobypat {
+            display: block;
+            margin: 0 auto 1rem;
+            height: 64px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+        }
+        .informe-logo {
+            display: block;
+            height: 48px;
+            object-fit: contain;
+            margin-bottom: 0.75rem;
+        }
+        .informe-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .informe-header-row .informe-titulo {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* ── Reporte ── */
+        #reporte {
+            display: none;
+            margin-top: 2rem;
+        }
+        #reporte.visible {
+            display: block;
+        }
+
+        .informe-bloque {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .informe-titulo {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+
+        /* ── Tablas del informe ── */
+        .informe-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 1.5rem;
+        }
+        .informe-tabla th {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 9px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .informe-tabla td {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            color: #222;
+        }
+        .informe-tabla tr:nth-child(even) td {
+            background: #f4f6f9;
+        }
+        .informe-tabla .fila-total td {
+            background: #e8ecf4;
+            font-weight: 700;
+            color: #1a1a2e;
+            border-top: 2px solid #1a1a2e;
+        }
+        .informe-tabla td.num {
+            text-align: right;
+        }
+
+        /* ── Contenedor gráfica + leyenda ── */
+        .chart-area {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .chart-canvas-wrap {
+            flex: 0 0 260px;
+        }
+        .chart-canvas-wrap canvas {
+            max-width: 260px;
+        }
+
+        /* Pie leyenda */
+        .leyenda-pie {
+            flex: 1;
+            min-width: 160px;
+        }
+        .leyenda-pie h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .leyenda-pie ul {
+            list-style: none;
+            padding: 0;
+        }
+        .leyenda-pie li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .leyenda-pie li .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        /* Gráfica de barras/línea */
+        .chart-combo-wrap {
+            width: 100%;
+        }
+        .chart-combo-wrap canvas {
+            width: 100% !important;
+        }
+
+        /* ── Botones del informe ── */
+        .btn-reporte-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .btn-reporte-group .btn {
+            margin-top: 0;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border: 1.5px solid rgba(255,255,255,0.2);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.14);
+        }
+        .btn-print {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(46,204,113,0.3);
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(46,204,113,0.4);
+        }
+
+        /* ── Print ── */
+        @media print {
+            body {
+                background: #fff !important;
+            }
+            .logo-cobypat {
+                filter: none;
+            }
+            .container {
+                background: #fff !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            .nav-bar,
+            #fase-upload,
+            .btn-reporte-group,
+            .footer {
+                display: none !important;
+            }
+            #reporte {
+                display: block !important;
+                margin-top: 0 !important;
+            }
+            .informe-bloque {
+                box-shadow: none !important;
+                border: 1px solid #ccc;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .chart-area {
+                flex-wrap: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Navegación -->
+    <nav class="nav-bar">
+        <a href="/" class="nav-link">📄 Razones</a>
+        <a href="/ordenes-pago" class="nav-link">💳 Órdenes de Pago</a>
+        <a href="/generar-archivos" class="nav-link">📂 Generar Archivos</a>
+        <a href="/cruces" class="nav-link">🔀 Cruces</a>
+        <a href="/informe-extrajudicial" class="nav-link active">📊 Informe Extrajudicial</a>
+    </nav>
+
+    <div class="header">
+        <img src="/static/cobypat_logo.png" alt="COBYPAT" class="logo-cobypat">
+        <h1>Informe Extrajudicial Mensual</h1>
+        <p>Sube el Excel de gestiones y el de liquidaciones — genera el informe listo para imprimir</p>
+    </div>
+
+    <!-- Fase upload -->
+    <div id="fase-upload">
+        <form id="form-informe">
+            <div class="upload-row">
+                <div class="upload-section">
+                    <label>📋 Excel de Gestiones CRM</label>
+                    <div class="upload-area" id="gestiones-area">
+                        <input type="file" id="gestiones-input" accept=".xlsx,.xls" />
+                        <div class="upload-icon">📊</div>
+                        <div class="upload-text">Arrastra o haz clic para seleccionar</div>
+                        <div class="upload-filename" id="gestiones-name"></div>
+                    </div>
+                </div>
+                <div class="upload-section">
+                    <label>💰 Excel de Liquidaciones</label>
+                    <div class="upload-area" id="liquidaciones-area">
+                        <input type="file" id="liquidaciones-input" accept=".xlsx,.xls" />
+                        <div class="upload-icon">💵</div>
+                        <div class="upload-text">Arrastra o haz clic para seleccionar</div>
+                        <div class="upload-filename" id="liquidaciones-name"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correos (opcional) -->
+            <div class="upload-section" style="margin-top:1.5rem">
+                <label>📧 CSV de Gestiones por Correo <span style="opacity:.6;font-weight:400">(opcional)</span></label>
+                <div class="upload-area" id="correos-area">
+                    <input type="file" id="correos-input" accept=".csv" />
+                    <div class="upload-icon">📨</div>
+                    <div class="upload-text">Arrastra o haz clic para seleccionar el .csv</div>
+                    <div class="upload-filename" id="correos-name"></div>
+                </div>
+            </div>
+
+            <!-- Rango de fechas para correos -->
+            <div id="rango-fechas" style="display:none; margin-top:1rem">
+                <label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:rgba(255,255,255,0.9)">
+                    📅 Rango de fechas para el informe de correos
+                </label>
+                <div style="display:flex; gap:1rem">
+                    <div style="flex:1">
+                        <label style="font-size:12px; color:rgba(255,255,255,0.6); display:block; margin-bottom:4px">Desde</label>
+                        <input type="date" id="fecha-inicio"
+                            style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid rgba(0,180,216,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:14px; color-scheme:dark">
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:12px; color:rgba(255,255,255,0.6); display:block; margin-bottom:4px">Hasta</label>
+                        <input type="date" id="fecha-fin"
+                            style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid rgba(0,180,216,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:14px; color-scheme:dark">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submit-btn" disabled style="margin-top:1.5rem">
+                📊 Generar Informe
+            </button>
+        </form>
+        <div class="status" id="status"></div>
+    </div>
+
+    <!-- Reporte -->
+    <div id="reporte">
+
+        <!-- Bloque 1: Gestiones -->
+        <div class="informe-bloque">
+            <div class="informe-header-row">
+                <img src="/static/cobypat_logo.png" alt="COBYPAT" class="informe-logo">
+                <div class="informe-titulo" id="titulo-gestiones"></div>
+            </div>
+
+            <table class="informe-tabla" id="tabla-gestiones">
+                <thead>
+                    <tr>
+                        <th>Etiquetas de Fila</th>
+                        <th style="text-align:right">RESPUESTA CRM</th>
+                        <th style="text-align:right">% RESPUESTA CRM</th>
+                    </tr>
+                </thead>
+                <tbody id="body-gestiones"></tbody>
+            </table>
+
+            <div class="chart-area">
+                <div class="chart-canvas-wrap">
+                    <canvas id="chart-pie"></canvas>
+                </div>
+                <div class="leyenda-pie">
+                    <h4>RESPUESTA CRM</h4>
+                    <ul id="leyenda-pie-lista"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloque 2: Pagos -->
+        <div class="informe-bloque">
+            <div class="informe-header-row">
+                <img src="/static/cobypat_logo.png" alt="COBYPAT" class="informe-logo">
+                <div class="informe-titulo" id="titulo-liquidaciones"></div>
+            </div>
+
+            <table class="informe-tabla" id="tabla-liquidaciones">
+                <thead>
+                    <tr>
+                        <th>Etiquetas de fila</th>
+                        <th style="text-align:right">COMISIÓN</th>
+                        <th style="text-align:right">NUM CLIENTES</th>
+                    </tr>
+                </thead>
+                <tbody id="body-liquidaciones"></tbody>
+            </table>
+
+            <div class="chart-combo-wrap">
+                <canvas id="chart-combo" height="120"></canvas>
+            </div>
+        </div>
+
+        <!-- Bloque 3: Correos (se muestra solo si se subió el CSV) -->
+        <div class="informe-bloque" id="bloque-correos" style="display:none">
+            <div class="informe-header-row">
+                <img src="/static/cobypat_logo.png" alt="COBYPAT" class="informe-logo">
+                <div class="informe-titulo" id="titulo-correos"></div>
+            </div>
+            <div style="text-align:center; font-size:12px; color:#555; margin-bottom:1rem" id="periodo-correos"></div>
+
+            <div style="display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap">
+                <div style="flex:1; min-width:260px">
+                    <table class="informe-tabla" id="tabla-correos">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th style="text-align:right">Cantidad</th>
+                                <th style="text-align:right">%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-correos"></tbody>
+                    </table>
+                </div>
+                <div style="flex:0 0 240px; text-align:center">
+                    <canvas id="chart-correos" width="240" height="240"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="btn-reporte-group">
+            <button class="btn btn-secondary" id="btn-volver">⬅ Nuevo Informe</button>
+            <button class="btn btn-print" id="btn-imprimir">🖨️ Imprimir / Guardar PDF</button>
+        </div>
+    </div>
+
+    <div class="footer">COBYPAT S.A. — Corporación Nacional de Telecomunicaciones CNT EP.</div>
+</div>
+
+<script type="module" src="/static/js/informe_extrajudicial.js"></script>
+</body>
+</html>

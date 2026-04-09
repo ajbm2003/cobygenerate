@@ -17,7 +17,7 @@ from io import BytesIO
 from typing import List, Optional
 
 import pandas as pd
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -51,6 +51,7 @@ from services.preprocesamiento import (
     obtener_reemplazos_auto_de_pago,
 )
 from services.cruces import cruzar_archivos, filtrar_columnas_resultado
+from services.dashboard import procesar_informe_extrajudicial
 import json
 
 # ============================================================
@@ -125,6 +126,11 @@ async def pagina_generar_archivos():
 @app.get("/cruces", response_class=HTMLResponse, summary="Interfaz — Cruces de datos")
 async def pagina_cruces():
     return HTMLResponse((BASE_DIR / "templates" / "cruces.html").read_text(encoding="utf-8"))
+
+
+@app.get("/informe-extrajudicial", response_class=HTMLResponse, summary="Interfaz — Informe Extrajudicial")
+async def pagina_informe_extrajudicial():
+    return HTMLResponse((BASE_DIR / "templates" / "informe_extrajudicial.html").read_text(encoding="utf-8"))
 
 
 # ============================================================
@@ -460,3 +466,54 @@ async def descargar_cruces_endpoint(payload: dict):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al generar descarga: {str(e)}")
+
+
+# ============================================================
+# Endpoint: Informe extrajudicial mensual
+# ============================================================
+
+@app.post(
+    "/analizar-informe-extrajudicial",
+    summary="Generar informe extrajudicial mensual",
+    description=(
+        "Sube el Excel de gestiones CRM y el Excel de liquidaciones. "
+        "Devuelve JSON con tablas y datos para gráficas del informe mensual."
+    ),
+)
+async def analizar_informe_extrajudicial_endpoint(
+    gestiones: UploadFile = File(..., description="Excel de gestiones diarias CRM"),
+    liquidaciones: UploadFile = File(..., description="Excel de liquidaciones / pagos realizados"),
+    correos: Optional[UploadFile] = File(None, description="CSV de gestiones por correo (opcional)"),
+    fecha_inicio: Optional[str] = Form(None, description="Fecha inicio filtro correos (YYYY-MM-DD)"),
+    fecha_fin: Optional[str] = Form(None, description="Fecha fin filtro correos (YYYY-MM-DD)"),
+):
+    _validar_extension(gestiones.filename, (".xlsx", ".xls"), "El archivo de gestiones debe ser .xlsx o .xls")
+    _validar_extension(liquidaciones.filename, (".xlsx", ".xls"), "El archivo de liquidaciones debe ser .xlsx o .xls")
+    if correos and correos.filename:
+        _validar_extension(correos.filename, (".csv",), "El archivo de correos debe ser .csv")
+
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        gestiones_path = os.path.join(tmp_dir, "gestiones.xlsx")
+        liquidaciones_path = os.path.join(tmp_dir, "liquidaciones.xlsx")
+        await _guardar_upload(gestiones, gestiones_path)
+        await _guardar_upload(liquidaciones, liquidaciones_path)
+
+        resultado = procesar_informe_extrajudicial(gestiones_path, liquidaciones_path)
+
+        if correos and correos.filename:
+            correos_path = os.path.join(tmp_dir, "correos.csv")
+            await _guardar_upload(correos, correos_path)
+            from services.dashboard import procesar_correos
+            resultado["correos"] = procesar_correos(correos_path, fecha_inicio, fecha_fin)
+
+        return resultado
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al procesar los archivos: {e}")
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)

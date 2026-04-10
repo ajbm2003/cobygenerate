@@ -111,9 +111,10 @@ btnImprimir.addEventListener('click', () => window.print());
 // ── Renderizado principal ─────────────────────────────────────
 function renderizarInforme(data) {
     const periodo = data.periodo || '';
+    const periodoRango = data.periodo_rango || periodo;
 
     // Encabezado de impresión
-    document.getElementById('print-periodo-texto').textContent = `Período: ${periodo}`;
+    document.getElementById('print-periodo-texto').textContent = `Período: ${periodoRango}`;
 
     if (data.gestiones.resumen) {
         renderizarResumen(data.gestiones.resumen, periodo);

@@ -14,6 +14,12 @@ MESES_ES = {
     9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE",
 }
 
+MESES_ES_LOWER = {
+    1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
+    5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
+    9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+}
+
 
 def procesar_informe_extrajudicial(gestiones_path: str, liquidaciones_path: str) -> dict:
     gestiones = _procesar_gestiones(gestiones_path)
@@ -29,6 +35,7 @@ def procesar_informe_extrajudicial(gestiones_path: str, liquidaciones_path: str)
 
     return {
         "periodo": gestiones["periodo"],
+        "periodo_rango": gestiones["periodo_rango"],
         "gestiones": gestiones,
         "liquidaciones": liquidaciones,
     }
@@ -52,10 +59,27 @@ def _procesar_gestiones(path: str) -> dict:
         # Filtrar solo filas del mes/año del período
         mask = (df["_fecha_dt"].dt.month == mes_num) & (df["_fecha_dt"].dt.year == anio)
         df = df[mask].copy()
+
+        # Rango real de fechas del período filtrado
+        fechas_filtradas = df["_fecha_dt"].dropna()
+        if len(fechas_filtradas) > 0:
+            f_min = fechas_filtradas.min()
+            f_max = fechas_filtradas.max()
+            mes_min = MESES_ES_LOWER.get(f_min.month, "")
+            mes_max = MESES_ES_LOWER.get(f_max.month, "")
+            if f_min.month == f_max.month and f_min.year == f_max.year:
+                periodo_rango = f"{f_min.day} de {mes_min} a {f_max.day} de {mes_max} {f_max.year}"
+            elif f_min.year == f_max.year:
+                periodo_rango = f"{f_min.day} de {mes_min} a {f_max.day} de {mes_max} {f_max.year}"
+            else:
+                periodo_rango = f"{f_min.day} de {mes_min} {f_min.year} a {f_max.day} de {mes_max} {f_max.year}"
+        else:
+            periodo_rango = periodo
     else:
         mes_num = None
         anio    = None
         periodo = ""
+        periodo_rango = ""
 
     # Sub-Respuesta → tabla + gráfica de pie
     col = _detectar_columna(df, ["Sub-Respuesta", "sub-respuesta", "Respuesta", "respuesta"])
@@ -74,6 +98,7 @@ def _procesar_gestiones(path: str) -> dict:
 
     return {
         "periodo": periodo,
+        "periodo_rango": periodo_rango,
         "_mes_num": mes_num,
         "_anio": anio,
         "titulo": f"GESTIÓN EXTRAJUDICIAL {periodo}",

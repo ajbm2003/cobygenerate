@@ -46,9 +46,7 @@ let chartCorreos = null;
 // ── Setup file inputs ─────────────────────────────────────────
 setupFileInput(gestionesInput, gestionesArea, gestionesName, actualizarBoton);
 setupFileInput(liquidInput,    liquidArea,    liquidName,    actualizarBoton);
-setupFileInput(correosInput,   correosArea,   correosName,   () => {
-    rangoFechas.style.display = correosInput.files.length > 0 ? '' : 'none';
-});
+setupFileInput(correosInput,   correosArea,   correosName,   () => {});
 
 function actualizarBoton() {
     submitBtn.disabled = !(gestionesInput.files.length > 0 && liquidInput.files.length > 0);
@@ -102,16 +100,43 @@ btnVolver.addEventListener('click', () => {
     reporte.classList.remove('visible');
     faseUpload.style.display = '';
     statusEl.className = 'status';
-    rangoFechas.style.display = 'none';
 });
 
 // ── Imprimir ──────────────────────────────────────────────────
 btnImprimir.addEventListener('click', () => window.print());
 
+// ── Helpers de fecha ─────────────────────────────────────────
+const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio',
+                  'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function formatearFechaEs(isoStr) {
+    // isoStr: "2026-04-01" → "1 de abril 2026"
+    const [anio, mes, dia] = isoStr.split('-').map(Number);
+    return `${dia} de ${MESES_ES[mes - 1]} ${anio}`;
+}
+
+function periodoDesdeInputs() {
+    if (fechaInicio.value && fechaFin.value) {
+        const [anioI, mesI, diaI] = fechaInicio.value.split('-').map(Number);
+        const [anioF, mesF, diaF] = fechaFin.value.split('-').map(Number);
+        const nomMesI = MESES_ES[mesI - 1];
+        const nomMesF = MESES_ES[mesF - 1];
+        if (mesI === mesF && anioI === anioF) {
+            return `${diaI} de ${nomMesI} a ${diaF} de ${nomMesF} ${anioF}`;
+        } else if (anioI === anioF) {
+            return `${diaI} de ${nomMesI} a ${diaF} de ${nomMesF} ${anioF}`;
+        } else {
+            return `${diaI} de ${nomMesI} ${anioI} a ${diaF} de ${nomMesF} ${anioF}`;
+        }
+    }
+    return null;
+}
+
 // ── Renderizado principal ─────────────────────────────────────
 function renderizarInforme(data) {
     const periodo = data.periodo || '';
-    const periodoRango = data.periodo_rango || periodo;
+    // Prioridad: fechas seleccionadas por el usuario → rango del backend → período mensual
+    const periodoRango = periodoDesdeInputs() || data.periodo_rango || periodo;
 
     // Encabezado de impresión
     document.getElementById('print-periodo-texto').textContent = `Período: ${periodoRango}`;

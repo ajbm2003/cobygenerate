@@ -342,10 +342,10 @@
                 </div>
             </div>
 
-            <!-- Rango de fechas para correos -->
-            <div id="rango-fechas" style="display:none; margin-top:1rem">
+            <!-- Rango de fechas del período del informe (siempre visible) -->
+            <div style="margin-top:1rem">
                 <label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:rgba(255,255,255,0.9)">
-                    📅 Rango de fechas para el informe de correos
+                    📅 Período del informe
                 </label>
                 <div style="display:flex; gap:1rem">
                     <div style="flex:1">
@@ -360,6 +360,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Rango de fechas para correos (solo visible si se sube CSV) -->
+            <div id="rango-fechas" style="display:none"></div>
 
             <button type="submit" class="btn btn-primary" id="submit-btn" disabled style="margin-top:1.5rem">
                 📊 Generar Informe

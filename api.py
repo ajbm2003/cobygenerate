@@ -306,6 +306,7 @@ async def generar_archivos_endpoint(
         obtener_reemplazos_previos = None
         nombre_excel = (excel.filename or "").lower()
         es_ampliaciones = ("ampliaciones" in nombre_excel) or ("amplicaciones" in nombre_excel)
+        es_opis = "opis" in nombre_excel
         if es_ampliaciones:
             df["HOY"] = formatear_fecha_larga_es(datetime.now())
 
@@ -318,12 +319,12 @@ async def generar_archivos_endpoint(
                 return f"documento-{nombre_cliente}"
 
             obtener_nombre_archivo = _nombre_archivo_ampliaciones
-        if es_ampliaciones:
+        if es_ampliaciones or es_opis:
             def _reemplazos_ampliaciones(row):
                 reemplazos = []
                 if "SEXO" in df.columns:
                     reemplazos.extend(obtener_reemplazos_sexo(row.get("SEXO", "")))
-                if "AUTO DE PAGO" in df.columns:
+                if es_ampliaciones and "AUTO DE PAGO" in df.columns:
                     reemplazos.extend(obtener_reemplazos_auto_de_pago(row.get("AUTO DE PAGO", "")))
                 return reemplazos
 

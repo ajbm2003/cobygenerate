@@ -194,10 +194,15 @@ def _process_paragraph(paragraph, variables: dict) -> None:
 
 def _replace_literal_in_paragraph(paragraph, old_text: str, new_text: str) -> None:
     """Reemplaza solo una frase específica, incluso si está dividida entre runs."""
-    if not paragraph.runs:
+    if not paragraph.runs or not old_text:
         return
 
-    while True:
+    # Limitar iteraciones a las coincidencias originales evita bucles cuando
+    # new_text contiene old_text (ej. deudor -> deudora).
+    full_text_inicial = "".join(run.text for run in paragraph.runs)
+    max_reemplazos = full_text_inicial.count(old_text)
+
+    for _ in range(max_reemplazos):
         full_text = "".join(run.text for run in paragraph.runs)
         start = full_text.find(old_text)
         if start == -1:

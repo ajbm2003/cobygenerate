@@ -137,7 +137,6 @@ def obtener_reemplazos_sexo(sexo: str) -> list[tuple[str, str]]:
         ("coactivado", "coactivada"),
         ("Coactivado", "Coactivada"),
         ("COACTIVADO", "COACTIVADA"),
-        ("deudor", "deudora"),
         ("Deudor", "Deudora"),
     ]
 
